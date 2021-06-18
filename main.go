@@ -45,6 +45,8 @@ var (
 	IS     Method = "IS"
 	NOT    Method = "NOT"
 	IN     Method = "IN"
+	NIN    Method = "NIN"
+	raw    Method = "raw" // internal usage
 )
 
 // NULL constant
@@ -65,6 +67,7 @@ var (
 		IS:     "IS",
 		NOT:    "IS NOT",
 		IN:     "IN",
+		NIN:    "NOT IN",
 	}
 )
 
@@ -249,6 +252,17 @@ func (q *Query) AddFilter(name string, m Method, value interface{}) *Query {
 	return q
 }
 
+// AddFilterRaw adds a filter to Query as SQL condition.
+// This function supports only single condition per one call.
+// If you'd like add more then one conditions you should call this func several times.
+func (q *Query) AddFilterRaw(condition string) *Query {
+	q.Filters = append(q.Filters, &Filter{
+		Name:   condition,
+		Method: raw,
+	})
+	return q
+}
+
 // RemoveFilter removes the filter by name
 func (q *Query) RemoveFilter(name string) error {
 	var found bool
@@ -375,7 +389,7 @@ func (q *Query) Where() string {
 		} else if filter.OR == EndOR {
 			prefix = " OR "
 			suffix = ")"
-		} else if i > 0 {
+		} else if i > 0 && len(where) > 0 {
 			prefix = " AND "
 		}
 
